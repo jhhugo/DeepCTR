@@ -32,6 +32,7 @@ class SparseFeat(namedtuple('SparseFeat',
         return super(SparseFeat, cls).__new__(cls, name, vocabulary_size, embedding_dim, use_hash, dtype,
                                               embedding_name, group_name)
 
+    # return hash(self)
     def __hash__(self):
         return self.name.__hash__()
 
@@ -98,6 +99,8 @@ def get_inputs_list(inputs):
 
 
 def build_input_features(feature_columns, prefix=''):
+    # drop copy 
+    feature_columns = set(feature_columns)
     input_features = OrderedDict()
     for fc in feature_columns:
         if isinstance(fc, SparseFeat):
@@ -113,7 +116,7 @@ def build_input_features(feature_columns, prefix=''):
                 input_features[fc.weight_name] = Input(shape=(fc.maxlen, 1), name=prefix + fc.weight_name,
                                                      dtype="float32")
             if fc.length_name is not None:
-                input_features[fc.length_name] = Input((1,),name=prefix+fc.length_name,dtype='int32')
+                input_features[fc.length_name] = Input(shape=(1,), name=prefix+fc.length_name, dtype='int32')
 
         else:
             raise TypeError("Invalid feature column type,got", type(fc))

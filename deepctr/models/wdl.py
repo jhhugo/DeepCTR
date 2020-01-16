@@ -33,7 +33,7 @@ def WDL(linear_feature_columns, dnn_feature_columns, dnn_hidden_units=(128, 128)
     :param task: str, ``"binary"`` for  binary logloss or  ``"regression"`` for regression loss
     :return: A Keras model instance.
     """
-
+    # 生成Input的字典
     features = build_input_features(
         linear_feature_columns + dnn_feature_columns)
 
