@@ -34,11 +34,12 @@ You can read the latest code at https://github.com/shenweichen/DeepCTR
 
 News
 -----
-11/24/2019 : Refactor `feature columns <./Features.html#feature-columns>`_ . Different features can use different ``embedding_dim`` and  group-wise interaction is available by setting ``group_name``. `Changelog <https://github.com/shenweichen/DeepCTR/releases/tag/v0.7.0>`_
 
-11/06/2019 : Add ``WeightedSequenceLayer`` and support `weighted sequence feature input <./Examples.html#multi-value-input-movielens>`_. `Changelog <https://github.com/shenweichen/DeepCTR/releases/tag/v0.6.3>`_
+03/15/2020 : Add `FLEN <./Features.html#flen-field-leveraged-embedding-network>`_ (`中文介绍 <https://zhuanlan.zhihu.com/p/92787577>`_) and ``FieldWiseBiInteraction``. `Changelog <https://github.com/shenweichen/DeepCTR/releases/tag/v0.7.4>`_
 
-10/03/2019 : Simplify the input logic(`examples <./Examples.html#classification-criteo>`_). `Changelog <https://github.com/shenweichen/DeepCTR/releases/tag/v0.6.2>`_
+03/04/2020 : Fix the inconsistency of prediction results when the model is loaded with trained weights. `Changelog <https://github.com/shenweichen/DeepCTR/releases/tag/v0.7.3>`_
+
+02/08/2020 : Fix some bugs. `Changelog <https://github.com/shenweichen/DeepCTR/releases/tag/v0.7.2>`_
 
 DisscussionGroup
 -----------------------

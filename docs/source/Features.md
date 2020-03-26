@@ -42,19 +42,14 @@ DNN based CTR prediction models usually have following 4 modules:
 
 ### VarLenSparseFeat
 
-``VarLenSparseFeat`` is a namedtuple with signature ``VarLenSparseFeat(name, maxlen, vocabulary_size, embedding_dim, combiner,use_hash, dtype, length_name,weight_name, embedding_name, group_name)``
+``VarLenSparseFeat`` is a namedtuple with signature ``VarLenSparseFeat(sparsefeat, maxlen, combiner, length_name, weight_name,weight_norm)``
 
-- name : feature name
+- sparsefeat : a instance of `SparseFeat`
 - maxlen : maximum length of this feature for all samples
-- vocabulary_size : number of unique feature values for sprase feature or hashing space when `use_hash=True`
-- embedding_dim : embedding dimension
 - combiner : pooling method,can be ``sum``,``mean`` or ``max``
-- use_hash : defualt `False`.if `True` the input will be hashed to space of size `vocabulary_size`.
-- dtype : default `float32`.dtype of input tensor.
 - length_name : feature length name,if `None`, value 0 in feature is for padding.
 - weight_name : default `None`. If not None, the sequence feature will be multiplyed by the feature whose name is `weight_name`.
-- embedding_name : default `None`. If None, the `embedding_name` will be same as `name`.
-- group_name : feature group of this feature.
+- weight_norm : default `True`. Whether normalize the weight score or not.
 
 ## Models
 
@@ -227,13 +222,13 @@ By stacking multiple interacting layers,AutoInt is able to model different order
 
 [Song W, Shi C, Xiao Z, et al. AutoInt: Automatic Feature Interaction Learning via Self-Attentive Neural Networks[J]. arXiv preprint arXiv:1810.11921, 2018.](https://arxiv.org/abs/1810.11921)
 
-### NFFM(Operation-aware Neural Networks for User Response Prediction)
+### ONN(Operation-aware Neural Networks for User Response Prediction)
 
-NFFM models second order feature interactions like like FFM and preserves second-order interaction information  as much as possible.Further more,deep neural network is used to learn higher-ordered feature interactions. 
+ONN models second order feature interactions like like FFM and preserves second-order interaction information  as much as possible.Further more,deep neural network is used to learn higher-ordered feature interactions. 
 
-[**NFFM Model API**](./deepctr.models.nffm.html)
+[**ONN Model API**](./deepctr.models.onn.html)
 
-![NFFM](../pics/NFFM.png)
+![ONN](../pics/ONN.png)
 
 [Yang Y, Xu B, Shen F, et al. Operation-aware Neural Networks for User Response Prediction[J]. arXiv preprint arXiv:1904.12579, 2019.](https://arxiv.org/pdf/1904.12579.pdf)
 
@@ -269,6 +264,17 @@ Feature Importance and Bilinear feature Interaction NETwork is proposed to dynam
 
 [Huang T, Zhang Z, Zhang J. FiBiNET: Combining Feature Importance and Bilinear feature Interaction for Click-Through Rate Prediction[J]. arXiv preprint arXiv:1905.09433, 2019.](https://arxiv.org/pdf/1905.09433.pdf)
 
+### FLEN(Field-Leveraged Embedding Network)
+
+A large-scale CTR prediction model with efficient usage of field information to alleviate gradient coupling problem.
+
+[**FLEN Model API**](./deepctr.models.flen.html)  
+
+[FLEN example](https://github.com/shenweichen/DeepCTR/tree/master/examples/run_flen.py)
+
+![FLEN](../pics/FLEN.jpg)
+
+[Chen W, Zhan L, Ci Y, Lin C. FLEN: Leveraging Field for Scalable CTR Prediction[J]. arXiv preprint arXiv:1911.04690, 2019.](https://arxiv.org/pdf/1911.04690.pdf)
 
 ## Layers
 
