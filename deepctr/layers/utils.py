@@ -42,6 +42,7 @@ class Hash(tf.keras.layers.Layer):
         if x.dtype != tf.string:
             x = tf.as_string(x, )
         try:
+            # hash冲突的可能性高, string_to_hash_bucket_strong: hash冲突的可能性低
             hash_x = tf.string_to_hash_bucket_fast(x, self.num_buckets if not self.mask_zero else self.num_buckets - 1,
                                                     name=None)  # weak hash
         except:
@@ -51,6 +52,7 @@ class Hash(tf.keras.layers.Layer):
             mask_1 = tf.cast(tf.not_equal(x, "0"), 'int64')
             mask_2 = tf.cast(tf.not_equal(x, "0.0"), 'int64')
             mask = mask_1 * mask_2
+            # mask vallue return zero
             hash_x = (hash_x + 1) * mask
         return hash_x
 
@@ -88,7 +90,7 @@ class Linear(tf.keras.layers.Layer):
                 initializer=tf.keras.initializers.glorot_normal(),
                 regularizer=tf.keras.regularizers.l2(self.l2_reg),
                 trainable=True)
-        elif self.mode == 2 :
+        elif self.mode == 2:
             self.kernel = self.add_weight(
                 'linear_kernel',
                 shape=[int(input_shape[1][-1]), 1],
@@ -101,14 +103,17 @@ class Linear(tf.keras.layers.Layer):
     def call(self, inputs, **kwargs):
         if self.mode == 0:
             sparse_input = inputs
-            linear_logit = reduce_sum(sparse_input, axis=-1, keep_dims=True)
+            # (batch_size, 1, 1), 这里有问题吧，想输出的是(batch_size, 1)
+            linear_logit = reduce_sum(sparse_input, axis=-1, keep_dims=False)
         elif self.mode == 1:
             dense_input = inputs
+            # (batch_size, 1)
             fc = tf.tensordot(dense_input, self.kernel, axes=(-1, 0))
             linear_logit = fc
         else:
             sparse_input, dense_input = inputs
             fc = tf.tensordot(dense_input, self.kernel, axes=(-1, 0))
+            # (batch_size, 1)
             linear_logit = reduce_sum(sparse_input, axis=-1, keep_dims=False) + fc
         if self.use_bias:
             linear_logit += self.bias
@@ -212,7 +217,7 @@ class Add(tf.keras.layers.Layer):
     def call(self, inputs, **kwargs):
         if not isinstance(inputs,list):
             return inputs
-        if len(inputs) == 1  :
+        if len(inputs) == 1:
             return inputs[0]
         if len(inputs) == 0:
             return tf.constant([[0.0]])

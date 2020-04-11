@@ -19,6 +19,74 @@ from tensorflow.python.layers import utils
 from .activation import activation_layer
 from .utils import concat_func, reduce_sum, softmax, reduce_mean
 
+class ResNet(Layer):
+    def __init__(self, hidden_units, activation='relu', l2_reg=0, dropout_rate=0, use_bn=False, seed=1024, **kwargs):
+        self.hidden_units = hidden_units
+        self.activation = activation
+        self.dropout_rate = dropout_rate
+        self.seed = seed
+        self.l2_reg = l2_reg
+        self.use_bn = use_bn
+        super(ResNet, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        if len(self.hidden_units) != 1:
+            raise ValueError('hidden_units must be (x, )')
+        
+        input_size = input_shape[-1]
+        self.hidden_units = list(self.hidden_units) + [int(input_size)]
+        hidden_units = [int(input_size)] + self.hidden_units
+        self.kernels = [self.add_weight(name='kernel' + str(i),
+                                        shape=(hidden_units[i], hidden_units[i + 1]),
+                                        initializer=glorot_normal(seed=self.seed),
+                                        regularizer=l2(self.l2_reg),
+                                        trainable=True) for i in range(len(self.hidden_units))]
+        self.bias = [self.add_weight(name='bias' + str(i),
+                                     shape=(self.hidden_units[i],),
+                                     initializer=Zeros(),
+                                     trainable=True) for i in range(len(self.hidden_units))]
+
+        if self.use_bn:
+            self.bn_layers = [tf.keras.layers.BatchNormalization() for _ in range(len(self.hidden_units))]
+
+        self.dropout_layers = [tf.keras.layers.Dropout(self.dropout_rate, seed=self.seed + i) for i in range(len(self.hidden_units))]
+
+        self.activation_layers = [activation_layer(self.activation) for _ in range(len(self.hidden_units))]
+
+        super(ResNet, self).build(input_shape)  # Be sure to call this somewhere!
+
+    def call(self, inputs, training=None, **kwargs):
+
+        deep_input = inputs
+
+        for i in range(len(self.hidden_units)):
+            # tf.add特例，bias只有一维，data_format是指数据格式，图片NCHW, None, channels, height, width
+            fc = tf.nn.bias_add(tf.tensordot(deep_input, self.kernels[i], axes=(-1, 0)), self.bias[i])
+            # fc = Dense(self.hidden_size[i], activation=None, \
+            #           kernel_initializer=glorot_normal(seed=self.seed), \
+            #           kernel_regularizer=l2(self.l2_reg))(deep_input)
+            if self.use_bn:
+                # 默认是None, True:是指训练的时候用，False:推断的时候不同
+                fc = self.bn_layers[i](fc, training=training)
+
+            fc = self.activation_layers[i](fc)
+
+            fc = self.dropout_layers[i](fc, training=training)
+            deep_input = fc
+
+        # resnet
+        deep_input = tf.add(deep_input, inputs)
+
+        return deep_input
+
+    def compute_output_shape(self, input_shape):
+        return (None, input_shape[-1])
+    
+    def get_config(self, ):
+        config = {'activation': self.activation, 'hidden_units': self.hidden_units,
+                  'l2_reg': self.l2_reg, 'use_bn': self.use_bn, 'dropout_rate': self.dropout_rate, 'seed': self.seed}
+        base_config = super(ResNet, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
 
 class AFMLayer(Layer):
     """Attentonal Factorization Machine models pairwise (order-2) feature
@@ -432,6 +500,7 @@ class FM(Layer):
         sum_of_square = reduce_sum(
             concated_embeds_value * concated_embeds_value, axis=1, keep_dims=True)
         cross_term = square_of_sum - sum_of_square
+        # (batch_size, 1)
         cross_term = 0.5 * reduce_sum(cross_term, axis=2, keep_dims=False)
 
         return cross_term
@@ -458,6 +527,7 @@ class InnerProductLayer(Layer):
     """
 
     def __init__(self, reduce_sum=True, **kwargs):
+        # neural cf, 是否点积，或者各元素相乘 
         self.reduce_sum = reduce_sum
         super(InnerProductLayer, self).__init__(**kwargs)
 
@@ -467,11 +537,14 @@ class InnerProductLayer(Layer):
             raise ValueError('A `InnerProductLayer` layer should be called '
                              'on a list of at least 2 inputs')
 
-        reduced_inputs_shapes = [shape.as_list() for shape in input_shape]
-        shape_set = set()
+        # tensorshape convert to list
+        # reduced_inputs_shapes = [shape.as_list() for shape in input_shape]
+        # shape_set = set()
 
-        for i in range(len(input_shape)):
-            shape_set.add(tuple(reduced_inputs_shapes[i]))
+        # for i in range(len(input_shape)):
+        #     shape_set.add(tuple(reduced_inputs_shapes[i]))
+
+        shape_set = set([tuple(shape.as_list()) for shape in input_shape])
 
         if len(shape_set) > 1:
             raise ValueError('A `InnerProductLayer` layer requires '
@@ -493,8 +566,10 @@ class InnerProductLayer(Layer):
         embed_list = inputs
         row = []
         col = []
+        # 特征个数
         num_inputs = len(embed_list)
 
+        # n * (n - 1) / 2
         for i in range(num_inputs - 1):
             for j in range(i + 1, num_inputs):
                 row.append(i)
@@ -650,11 +725,13 @@ class OutterProductLayer(Layer):
             raise ValueError('A `OutterProductLayer` layer should be called '
                              'on a list of at least 2 inputs')
 
-        reduced_inputs_shapes = [shape.as_list() for shape in input_shape]
-        shape_set = set()
+        # reduced_inputs_shapes = [shape.as_list() for shape in input_shape]
+        # shape_set = set()
 
-        for i in range(len(input_shape)):
-            shape_set.add(tuple(reduced_inputs_shapes[i]))
+        # for i in range(len(input_shape)):
+        #     shape_set.add(tuple(reduced_inputs_shapes[i]))
+        
+        shape_set = set([tuple(shape.as_list()) for shape in input_shape])
 
         if len(shape_set) > 1:
             raise ValueError('A `OutterProductLayer` layer requires '
@@ -707,6 +784,7 @@ class OutterProductLayer(Layer):
 
         # -------------------------
         if self.kernel_type == 'mat':
+            # batch_size, 1, num_pairs, embedding_size
             p = tf.expand_dims(p, 1)
             # k     k* pair* k
             # batch * pair
@@ -726,6 +804,7 @@ class OutterProductLayer(Layer):
 
                             # batch * k * pair * k
 
+                            # 点乘
                             tf.multiply(
 
                                 p, self.kernel),
@@ -743,7 +822,7 @@ class OutterProductLayer(Layer):
             k = tf.expand_dims(self.kernel, 0)
 
             # batch * pair
-
+            
             kp = reduce_sum(p * q * k, -1)
 
             # p q # b * p * k

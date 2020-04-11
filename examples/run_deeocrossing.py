@@ -1,10 +1,12 @@
+# -*- coding:utf-8 -*-
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 
 from deepctr.inputs import SparseFeat, VarLenSparseFeat, get_feature_names
-from deepctr.models import DeepFM
+from deepctr.models import DeepCrossing
 
 
 def split(x):
@@ -53,19 +55,18 @@ if __name__ == "__main__":
             key2index) + 1, embedding_dim=4), maxlen=max_len, combiner='mean',
                                                    weight_name=None)]  # Notice : value 0 is for padding for sequence input feature
 
-    linear_feature_columns = fixlen_feature_columns + varlen_feature_columns
     dnn_feature_columns = fixlen_feature_columns + varlen_feature_columns
 
-    feature_names = get_feature_names(linear_feature_columns + dnn_feature_columns)
+    feature_names = get_feature_names(dnn_feature_columns)
 
     # 3.generate input data for model
     model_input = {name: data[name] for name in sparse_features}  #
     model_input["genres"] = genres_list
-    model_input["genres_weight"] = np.random.randn(data.shape[0], max_len, 1)
+    # model_input["genres_weight"] = np.random.randn(data.shape[0], max_len, 1)
 
     # 4.Define Model,compile and train
-    model = DeepFM(linear_feature_columns, dnn_feature_columns, task='regression')
+    model = DeepCrossing(dnn_feature_columns, task='binary')
 
-    model.compile("adam", "mse", metrics=['mse'], )
+    model.compile("adam", "binary_crossentropy", metrics=['binary_crossentropy'], )
     history = model.fit(model_input, data[target].values,
                         batch_size=256, epochs=10, verbose=2, validation_split=0.2, )

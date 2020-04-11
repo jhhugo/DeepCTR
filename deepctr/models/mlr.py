@@ -30,6 +30,7 @@ def MLR(region_feature_columns, base_feature_columns=None, region_num=4,
     :return: A Keras model instance.
     """
 
+    # 通过不同的特征， 将样本分群建模
     if region_num <= 1:
         raise ValueError("region_num must > 1")
 
@@ -44,10 +45,13 @@ def MLR(region_feature_columns, base_feature_columns=None, region_num=4,
 
     inputs_list = list(features.values())
 
+    # softmax 区间
     region_score = get_region_score(features,region_feature_columns,region_num,l2_reg_linear,init_std,seed)
+    # 预测概率
     learner_score = get_learner_score(features,base_feature_columns,region_num,l2_reg_linear,init_std,seed,task=task)
 
-    final_logit = dot([region_score,learner_score],axes=-1)
+    # 向量点乘 (batch_size, 1)
+    final_logit = dot([region_score,learner_score], axes=-1)
 
     if bias_feature_columns is not None and len(bias_feature_columns) > 0:
         bias_score =get_learner_score(features,bias_feature_columns,1,l2_reg_linear,init_std,seed,prefix='bias_',task='binary')
@@ -60,11 +64,13 @@ def MLR(region_feature_columns, base_feature_columns=None, region_num=4,
 
 def get_region_score(features,feature_columns, region_number, l2_reg, init_std, seed,prefix='region_',seq_mask_zero=True):
 
+    # embedding初始化seed不一样，(batch_size, 1 * m)
     region_logit =concat_func([get_linear_logit(features, feature_columns, init_std=init_std, seed=seed + i,
                                                 prefix=prefix + str(i + 1), l2_reg=l2_reg) for i in range(region_number)])
     return Activation('softmax')(region_logit)
 
 def get_learner_score(features,feature_columns, region_number, l2_reg, init_std, seed,prefix='learner_',seq_mask_zero=True,task='binary'):
+    # 学习器的预测值sigmoid
     region_score = [PredictionLayer(task=task,use_bias=False)(
         get_linear_logit(features, feature_columns, init_std=init_std, seed=seed + i, prefix=prefix + str(i + 1),
                          l2_reg=l2_reg)) for i in

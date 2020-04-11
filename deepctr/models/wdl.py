@@ -51,6 +51,7 @@ def WDL(linear_feature_columns, dnn_feature_columns, dnn_hidden_units=(128, 128)
     dnn_logit = Dense(
         1, use_bias=False, activation=None)(dnn_out)
 
+    # wide and deep logit 平均加和
     final_logit = add_func([dnn_logit, linear_logit])
 
     output = PredictionLayer(task)(final_logit)

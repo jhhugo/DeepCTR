@@ -43,13 +43,12 @@ class SequencePoolingLayer(Layer):
     """
 
     def __init__(self, mode='mean', supports_masking=False, **kwargs):
-
+        super(SequencePoolingLayer, self).__init__(**kwargs)
         if mode not in ['sum', 'mean', 'max']:
-            raise ValueError("mode must be sum or mean")
+            raise ValueError("mode must be sum, mean or sum")
+        # self.supports_masking = supports_masking
         self.mode = mode
         self.eps = tf.constant(1e-8, tf.float32)
-        super(SequencePoolingLayer, self).__init__(**kwargs)
-
         self.supports_masking = supports_masking
 
     def build(self, input_shape):
@@ -59,29 +58,38 @@ class SequencePoolingLayer(Layer):
             input_shape)  # Be sure to call this somewhere!
 
     def call(self, seq_value_len_list, mask=None, **kwargs):
+        # 上一层 mask会计算传承下来
         if self.supports_masking:
             if mask is None:
                 raise ValueError(
                     "When supports_masking=True,input must support masking")
+            # seq_value
             uiseq_embed_list = seq_value_len_list
             mask = tf.cast(mask, tf.float32)  # tf.to_float(mask)
+            # (batch_size, 1)
             user_behavior_length = reduce_sum(mask, axis=-1, keep_dims=True)
+            # (batch_size, T, 1)
             mask = tf.expand_dims(mask, axis=2)
         else:
+            # [seq_value,seq_len]
             uiseq_embed_list, user_behavior_length = seq_value_len_list
 
+            # (batch_size, T, 1)
             mask = tf.sequence_mask(user_behavior_length,
                                     self.seq_len_max, dtype=tf.float32)
             mask = tf.transpose(mask, (0, 2, 1))
 
         embedding_size = uiseq_embed_list.shape[-1]
 
+        # (batch_size, T, embedding_size)
         mask = tf.tile(mask, [1, 1, embedding_size])
 
         if self.mode == "max":
-            hist = uiseq_embed_list - (1-mask) * 1e9
+            hist = uiseq_embed_list - (1-mask) * 1e10
+            # (batch_size, 1, embedding_size)
             return reduce_max(hist, 1, keep_dims=True)
 
+        # (batch_size, embedding_size)
         hist = reduce_sum(uiseq_embed_list * mask, 1, keep_dims=False)
 
         if self.mode == "mean":
@@ -96,7 +104,7 @@ class SequencePoolingLayer(Layer):
         else:
             return (None, 1, input_shape[0][-1])
 
-    def compute_mask(self, inputs, mask):
+    def compute_mask(self, inputs, mask=None):
         return None
 
     def get_config(self, ):
@@ -146,25 +154,31 @@ class WeightedSequenceLayer(Layer):
             mask = tf.expand_dims(mask[0], axis=2)
         else:
             key_input, key_length_input, value_input = input_list
+            # (batch_size, 1, seq_len_max)
             mask = tf.sequence_mask(key_length_input,
                                     self.seq_len_max, dtype=tf.bool)
+            # (batch_size, seq_len_max, 1)
             mask = tf.transpose(mask, (0, 2, 1))
 
         embedding_size = key_input.shape[-1]
 
         if self.weight_normalization:
+            # e^(最小数)接近0
             paddings = tf.ones_like(value_input) * (-2 ** 32 + 1)
         else:
             paddings = tf.zeros_like(value_input)
+        # 选取有效的embedding weight
         value_input = tf.where(mask, value_input, paddings)
 
+        # softmax归一化
         if self.weight_normalization:
             value_input = softmax(value_input, dim=1)
 
         if len(value_input.shape) == 2:
             value_input = tf.expand_dims(value_input, axis=2)
+            # 每个维度扩充几倍
             value_input = tf.tile(value_input, [1, 1, embedding_size])
-
+        # 点乘
         return tf.multiply(key_input, value_input)
 
     def compute_output_shape(self, input_shape):

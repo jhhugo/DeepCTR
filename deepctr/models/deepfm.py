@@ -38,6 +38,7 @@ def DeepFM(linear_feature_columns, dnn_feature_columns, fm_group=[DEFAULT_GROUP_
     :return: A Keras model instance.
     """
 
+    # 生成feature input 字典
     features = build_input_features(
         linear_feature_columns + dnn_feature_columns)
 
@@ -48,9 +49,11 @@ def DeepFM(linear_feature_columns, dnn_feature_columns, fm_group=[DEFAULT_GROUP_
 
     linear_logit = get_linear_logit(features, linear_feature_columns, init_std=init_std, seed=seed, prefix='linear',
                                     l2_reg=l2_reg_linear)
+    # 选择需要交叉的特征组
     fm_logit = add_func([FM()(concat_func(v, axis=1))
                          for k, v in group_embedding_dict.items() if k in fm_group])
 
+    # (batch_size, n)
     dnn_input = combined_dnn_input(list(chain.from_iterable(
         group_embedding_dict.values())), dense_value_list)
     dnn_output = DNN(dnn_hidden_units, dnn_activation, l2_reg_dnn, dnn_dropout,

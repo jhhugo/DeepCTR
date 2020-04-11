@@ -177,12 +177,14 @@ class DNN(Layer):
         deep_input = inputs
 
         for i in range(len(self.hidden_units)):
+            # tf.add特例，bias只有一维，data_format是指数据格式，图片NCHW, None, channels, height, width
             fc = tf.nn.bias_add(tf.tensordot(
                 deep_input, self.kernels[i], axes=(-1, 0)), self.bias[i])
             # fc = Dense(self.hidden_size[i], activation=None, \
             #           kernel_initializer=glorot_normal(seed=self.seed), \
             #           kernel_regularizer=l2(self.l2_reg))(deep_input)
             if self.use_bn:
+                # 默认是None, True:是指训练的时候用，False:推断的时候不同
                 fc = self.bn_layers[i](fc, training=training)
 
             fc = self.activation_layers[i](fc)
