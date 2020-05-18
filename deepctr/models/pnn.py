@@ -15,13 +15,12 @@ from ..layers.interaction import InnerProductLayer, OutterProductLayer
 from ..layers.utils import concat_func
 
 
-def PNN(dnn_feature_columns, embedding_size=8, dnn_hidden_units=(128, 128), l2_reg_embedding=1e-5, l2_reg_dnn=0,
-        init_std=0.0001, seed=1024, dnn_dropout=0, dnn_activation='relu', use_inner=True, use_outter=False,
-        kernel_type='mat', task='binary'):
+def PNN(dnn_feature_columns, dnn_hidden_units=(128, 128), l2_reg_embedding=1e-5, l2_reg_dnn=0, init_std=0.0001,
+        seed=1024, dnn_dropout=0, dnn_activation='relu', use_inner=True, use_outter=False, kernel_type='mat',
+        task='binary'):
     """Instantiates the Product-based Neural Network architecture.
 
     :param dnn_feature_columns: An iterable containing all the features used by deep part of the model.
-    :param embedding_size: positive integer,sparse feature embedding_size
     :param dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of deep net
     :param l2_reg_embedding: float . L2 regularizer strength applied to embedding vector
     :param l2_reg_dnn: float. L2 regularizer strength applied to DNN
@@ -55,7 +54,11 @@ def PNN(dnn_feature_columns, embedding_size=8, dnn_hidden_units=(128, 128), l2_r
     # ipnn deep input
     # Reshape不需要batch_size， 但是tf.reshape是完整的维度
     linear_signal = tf.keras.layers.Reshape(
+<<<<<<< HEAD
         (len(sparse_embedding_list) * embedding_size))(concat_func(sparse_embedding_list))
+=======
+        [sum(map(lambda x:int(x.shape[-1]) ,sparse_embedding_list))])(concat_func(sparse_embedding_list))
+>>>>>>> 9e6be3f28d5b213e8596b8f79e68efd6d5fd21ba
 
     if use_inner and use_outter:
         deep_input = tf.keras.layers.Concatenate()(
