@@ -103,8 +103,8 @@ class Linear(tf.keras.layers.Layer):
     def call(self, inputs, **kwargs):
         if self.mode == 0:
             sparse_input = inputs
-            # (batch_size, 1, 1), 这里有问题吧，想输出的是(batch_size, 1)
-            linear_logit = reduce_sum(sparse_input, axis=-1, keep_dims=False)
+            # (batch_size, 1)
+            linear_logit = reduce_sum(sparse_input, axis=-1, keep_dims=True)
         elif self.mode == 1:
             dense_input = inputs
             # (batch_size, 1)
@@ -225,3 +225,7 @@ class Add(tf.keras.layers.Layer):
         return tf.keras.layers.add(inputs)
 def add_func(inputs):
     return Add()(inputs)
+
+
+def basic_loss_function(y_true, y_pred):
+    return tf.math.reduce_mean(y_pred)

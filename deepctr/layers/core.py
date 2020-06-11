@@ -11,6 +11,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.initializers import Zeros, glorot_normal
 from tensorflow.python.keras.layers import Layer
 from tensorflow.python.keras.regularizers import l2
+from tensorflow.keras.initializers import GlorotUniform
 
 from .activation import activation_layer
 
@@ -79,8 +80,8 @@ class LocalActivationUnit(Layer):
         self.dnn = DNN(self.hidden_units, self.activation, self.l2_reg,
                        self.dropout_rate, self.use_bn, seed=self.seed)
 
-        self.dense = tf.keras.layers.Lambda(lambda x: tf.nn.bias_add(tf.tensordot(
-            x[0], x[1], axes=(-1, 0)), x[2]))
+        # self.dense = tf.keras.layers.Lambda(lambda x: tf.nn.bias_add(tf.tensordot(
+        #     x[0], x[1], axes=(-1, 0)), x[2]))
 
         super(LocalActivationUnit, self).build(
             input_shape)  # Be sure to call this somewhere!
@@ -97,7 +98,8 @@ class LocalActivationUnit(Layer):
 
         att_out = self.dnn(att_input, training=training)
 
-        attention_score = self.dense([att_out, self.kernel, self.bias])
+        attention_score = tf.nn.bias_add(tf.tensordot(att_out, self.kernel, axes=(-1, 0)), self.bias)
+        # attention_score = self.dense([att_out, self.kernel, self.bias])
 
         return attention_score
 
@@ -250,4 +252,48 @@ class PredictionLayer(Layer):
     def get_config(self, ):
         config = {'task': self.task, 'use_bias': self.use_bias}
         base_config = super(PredictionLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+class SampledSoftmax(Layer):
+    def __init__(self, item_nums, num_sampled, l2_reg, seed, **kwargs):
+        super(SampledSoftmax, self).__init__(**kwargs)
+        self.item_nums = item_nums
+        self.num_sampled = num_sampled
+        self.l2_reg = l2_reg
+        self.seed = seed
+
+    def build(self, input_shape):
+        super(SampledSoftmax, self).build(input_shape)
+        embed_size = input_shape[1]
+        self.softmax_w = self.add_weight(
+                                         name="softmax_w",
+                                         shape=(self.item_nums, embed_size),
+                                         initializer=GlorotUniform(self.seed),
+                                         regularizer=l2(self.l2_reg)
+                                        )
+        self.softmax_b = self.add_weight(
+                                         name="softmax_b",
+                                         shape=(self.item_nums,),
+                                         initializer=Zeros()
+                                        )
+
+    def call(self, inputs):
+        input_embed, labels = inputs
+        softmax_loss = tf.nn.sampled_softmax_loss(weights=self.softmax_w,
+                                                  biases=self.softmax_b,
+                                                  labels=labels,
+                                                  inputs=input_embed,
+                                                  num_sampled=self.num_sampled,
+                                                  num_classes=self.item_nums,
+                                                  seed=self.seed,
+                                                  name="softmax_loss")
+        return softmax_loss
+    
+    def compute_output_shape(self, input_shape):
+        return (None,)
+    
+    def get_config(self, ):
+        config = {'item_nums': self.item_nums, 'num_sampled': self.num_sampled,
+                  "l2_reg": self.l2_reg, "seed": self.seed}
+        base_config = super(SampledSoftmax, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

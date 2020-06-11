@@ -1246,3 +1246,56 @@ class FieldWiseBiInteraction(Layer):
         config = {'use_bias': self.use_bias, 'seed': self.seed}
         base_config = super(FieldWiseBiInteraction, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+# eges attention
+class Attention_Eges(Layer):
+    def __init__(self, item_nums, l2_reg, seed, **kwargs):
+        super(Attention_Eges, self).__init__(**kwargs)
+        self.item_nums = item_nums
+        self.seed = seed
+        self.l2_reg = l2_reg
+    
+    def build(self, input_shape):
+        super(Attention_Eges, self).build(input_shape)
+        if not isinstance(input_shape, list) or len(input_shape) != 2:
+            raise ValueError("Attention_Eges must have two inputs")
+
+        # shape_set = set()
+        # reduced_input_shape = [shape.as_list() for shape in input_shape]
+        # for i in range(len(input_shape)):
+        #     shape_set.add(tuple(reduced_input_shape[i]))
+
+        shape_set = input_shape
+
+        self.feat_nums = shape_set[1][1]
+        self.alpha_attention = self.add_weight(
+                name='alpha_attention',
+                shape=(self.item_nums, self.feat_nums),
+                initializer=tf.keras.initializers.RandomUniform(minval=-1, maxval=1, seed=self.seed),
+                regularizer=l2(self.l2_reg))
+        
+    def call(self, inputs, **kwargs):
+        item_input = inputs[0]
+        # (batch_size, feat_nums, embed_size)
+        stack_embeds = inputs[1]
+        # (batch_size, 1, feat_nums)
+        alpha_embeds = tf.nn.embedding_lookup(self.alpha_attention, item_input)
+        alpha_embeds = tf.math.exp(alpha_embeds)
+        alpha_sum = tf.reduce_sum(alpha_embeds, axis=-1)
+        # (batch_size, embed_size, 1), 归一化
+        merge_embeds = tf.tensordot(stack_embeds, alpha_embeds, axes=[[1], [2]]) / alpha_sum
+        # (batch_size, embed_size)
+        merge_embeds = tf.sequence(merge_embeds, axis=-1)
+        return merge_embeds
+    
+    def compute_mask(self, inputs, mask):
+        return None
+    
+    def compute_output_shape(self, input_shape):
+        return (None, input_shape[1][2])
+    
+    def get_config(self):
+        config = {'item_nums': self.item_nums, "l2_reg": self.l2_reg, 'seed': self.seed}
+        base_config = super(Attention_Eges, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
