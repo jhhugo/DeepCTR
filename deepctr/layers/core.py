@@ -264,7 +264,7 @@ class SampledSoftmax(Layer):
 
     def build(self, input_shape):
         super(SampledSoftmax, self).build(input_shape)
-        embed_size = input_shape[1]
+        embed_size = input_shape[0][1]
         self.softmax_w = self.add_weight(
                                          name="softmax_w",
                                          shape=(self.item_nums, embed_size),
