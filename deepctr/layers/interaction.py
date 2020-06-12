@@ -1283,10 +1283,10 @@ class Attention_Eges(Layer):
         alpha_embeds = tf.nn.embedding_lookup(self.alpha_attention, item_input)
         alpha_embeds = tf.math.exp(alpha_embeds)
         alpha_sum = tf.reduce_sum(alpha_embeds, axis=-1)
-        # (batch_size, embed_size, 1), 归一化
-        merge_embeds = tf.tensordot(stack_embeds, alpha_embeds, axes=[[1], [2]]) / alpha_sum
-        # (batch_size, embed_size)
-        merge_embeds = tf.squeeze(merge_embeds, axis=-1)
+        # (batch_size, 1, embed_size)
+        merge_embeds = tf.matmul(alpha_embeds, stack_embeds)
+        # (batch_size, embed_size), 归一化
+        merge_embeds = tf.squeeze(merge_embeds, axis=1)  / alpha_sum
         return merge_embeds
     
     def compute_mask(self, inputs, mask):

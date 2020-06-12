@@ -12,7 +12,7 @@ def EGES(item_feature, side_feature_columns, num_sampled=100, l2_reg_embedding=0
          seed=1024):
     features = build_input_features(
         [item_feature] + side_feature_columns)
-    labels = Input(shape=(1, ), dtype=tf.int32, name="labels")
+    labels = Input(shape=(1, ), dtype=tf.int64, name="label")
     # inputs_list = list(features.values()) + [labels]
     features["label"] = labels
 
