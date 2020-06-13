@@ -277,9 +277,9 @@ class SampledSoftmax(Layer):
                                          initializer=Zeros()
                                         )
 
-    def call(self, inputs):
+    def call(self, inputs, training=None, **kwargs):
         input_embed, labels = inputs
-        if self.mode == "train":
+        if training:
             softmax_loss = tf.nn.sampled_softmax_loss(weights=self.softmax_w,
                                                     biases=self.softmax_b,
                                                     labels=labels,
@@ -288,7 +288,7 @@ class SampledSoftmax(Layer):
                                                     num_classes=self.item_nums,
                                                     seed=self.seed,
                                                     name="softmax_loss")
-        elif self.mode == "eval":
+        else:
             logits = tf.matmul(input_embed, tf.transpose(self.softmax_w))
             logits = tf.nn.bias_add(logits, self.softmax_b)
             labels_one_hot = tf.one_hot(labels, self.item_nums)
