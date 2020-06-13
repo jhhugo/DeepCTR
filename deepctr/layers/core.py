@@ -279,14 +279,22 @@ class SampledSoftmax(Layer):
 
     def call(self, inputs):
         input_embed, labels = inputs
-        softmax_loss = tf.nn.sampled_softmax_loss(weights=self.softmax_w,
-                                                  biases=self.softmax_b,
-                                                  labels=labels,
-                                                  inputs=input_embed,
-                                                  num_sampled=self.num_sampled,
-                                                  num_classes=self.item_nums,
-                                                  seed=self.seed,
-                                                  name="softmax_loss")
+        if self.mode == "train":
+            softmax_loss = tf.nn.sampled_softmax_loss(weights=self.softmax_w,
+                                                    biases=self.softmax_b,
+                                                    labels=labels,
+                                                    inputs=input_embed,
+                                                    num_sampled=self.num_sampled,
+                                                    num_classes=self.item_nums,
+                                                    seed=self.seed,
+                                                    name="softmax_loss")
+        elif self.mode == "eval":
+            logits = tf.matmul(input_embed, tf.transpose(self.softmax_w))
+            logits = tf.nn.bias_add(logits, self.softmax_b)
+            labels_one_hot = tf.one_hot(labels, self.item_nums)
+            softmax_loss = tf.nn.softmax_cross_entropy_with_logits(
+                                                                    labels=labels_one_hot,
+                                                                    logits=logits)
         return softmax_loss
     
     def compute_output_shape(self, input_shape):
