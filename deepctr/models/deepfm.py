@@ -50,12 +50,6 @@ def DeepFM(linear_feature_columns, dnn_feature_columns, fm_group=[DEFAULT_GROUP_
     group_embedding_dict, dense_value_list = input_from_feature_columns(features, dnn_feature_columns, l2_reg_embedding,
                                                                         seed, support_group=True)
 
-<<<<<<< HEAD
-    linear_logit = get_linear_logit(features, linear_feature_columns, init_std=init_std, seed=seed, prefix='linear',
-                                    l2_reg=l2_reg_linear)
-    # 选择需要交叉的特征组
-=======
->>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5
     fm_logit = add_func([FM()(concat_func(v, axis=1))
                          for k, v in group_embedding_dict.items() if k in fm_group])
 

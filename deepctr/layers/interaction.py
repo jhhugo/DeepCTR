@@ -1261,7 +1261,6 @@ class FieldWiseBiInteraction(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
-<<<<<<< HEAD
 # eges attention
 class Attention_Eges(Layer):
     def __init__(self, item_nums, l2_reg, seed, **kwargs):
@@ -1416,7 +1415,6 @@ class Weighted_Expert_Network(Layer):
         base_config = super(Weighted_Expert_Network, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
         
-=======
 class FwFMLayer(Layer):
     """Field-weighted Factorization Machines
 
@@ -1492,4 +1490,3 @@ class FwFMLayer(Layer):
             'regularizer': self.regularizer
         })
         return config
->>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5

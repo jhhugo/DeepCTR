@@ -224,14 +224,13 @@ class Add(tf.keras.layers.Layer):
             return tf.constant([[0.0]])
 
         return tf.keras.layers.add(inputs)
+
 def add_func(inputs):
     return Add()(inputs)
-
-
-<<<<<<< HEAD
+    
 def basic_loss_function(y_true, y_pred):
     return tf.math.reduce_mean(y_pred)
-=======
+
 def combined_dnn_input(sparse_embedding_list, dense_value_list):
     if len(sparse_embedding_list) > 0 and len(dense_value_list) > 0:
         sparse_dnn_input = Flatten()(concat_func(sparse_embedding_list))
@@ -243,4 +242,3 @@ def combined_dnn_input(sparse_embedding_list, dense_value_list):
         return Flatten()(concat_func(dense_value_list))
     else:
         raise NotImplementedError("dnn_feature_columns can not be empty list")
->>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5

@@ -43,7 +43,6 @@ def MLR(region_feature_columns, base_feature_columns=None, region_num=4,
 
     inputs_list = list(features.values())
 
-<<<<<<< HEAD
     # softmax 区间
     region_score = get_region_score(features,region_feature_columns,region_num,l2_reg_linear,init_std,seed)
     # 预测概率
@@ -51,12 +50,6 @@ def MLR(region_feature_columns, base_feature_columns=None, region_num=4,
 
     # 向量点乘 (batch_size, 1)
     final_logit = dot([region_score,learner_score], axes=-1)
-=======
-    region_score = get_region_score(features, region_feature_columns, region_num, l2_reg_linear, seed)
-    learner_score = get_learner_score(features, base_feature_columns, region_num, l2_reg_linear, seed, task=task)
-
-    final_logit = dot([region_score, learner_score], axes=-1)
->>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5
 
     if bias_feature_columns is not None and len(bias_feature_columns) > 0:
         bias_score = get_learner_score(features, bias_feature_columns, 1, l2_reg_linear, seed, prefix='bias_',
@@ -68,7 +61,6 @@ def MLR(region_feature_columns, base_feature_columns=None, region_num=4,
     return model
 
 
-<<<<<<< HEAD
 def get_region_score(features,feature_columns, region_number, l2_reg, init_std, seed,prefix='region_',seq_mask_zero=True):
 
     # embedding初始化seed不一样，(batch_size, 1 * m)
@@ -80,19 +72,6 @@ def get_learner_score(features,feature_columns, region_number, l2_reg, init_std,
     # 学习器的预测值sigmoid
     region_score = [PredictionLayer(task=task,use_bias=False)(
         get_linear_logit(features, feature_columns, init_std=init_std, seed=seed + i, prefix=prefix + str(i + 1),
-=======
-def get_region_score(features, feature_columns, region_number, l2_reg, seed, prefix='region_', seq_mask_zero=True):
-    region_logit = concat_func([get_linear_logit(features, feature_columns, seed=seed + i,
-                                                 prefix=prefix + str(i + 1), l2_reg=l2_reg) for i in
-                                range(region_number)])
-    return Activation('softmax')(region_logit)
-
-
-def get_learner_score(features, feature_columns, region_number, l2_reg, seed, prefix='learner_', seq_mask_zero=True,
-                      task='binary'):
-    region_score = [PredictionLayer(task=task, use_bias=False)(
-        get_linear_logit(features, feature_columns, seed=seed + i, prefix=prefix + str(i + 1),
->>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5
                          l2_reg=l2_reg)) for i in
         range(region_number)]
 
