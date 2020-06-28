@@ -19,6 +19,7 @@ from .fibinet import FiBiNET
 from .flen import FLEN
 from .deepcrossing import DeepCrossing
 from .eges import EGES
+from .mmoe import MMOE
 
-__all__ = ["AFM", "CCPM","DCN", "MLR",  "DeepFM", "DeepCrossing", "EGES",
+__all__ = ["AFM", "CCPM","DCN", "MLR",  "DeepFM", "DeepCrossing", "EGES", "MMOE",
            "MLR", "NFM", "DIN", "DIEN", "FNN", "PNN", "WDL", "xDeepFM", "AutoInt", "ONN", "FGCNN", "DSIN", "FiBiNET", 'FLEN']

@@ -6,9 +6,8 @@ from deepctr.inputs import  SparseFeat, DenseFeat, get_feature_names
 from deepctr.layers.utils import basic_loss_function
 
 if __name__ == "__main__":
-    data = pd.read_csv('./data_cache/all_data.csv')
-    with open("./data_cache/count.pkl", "rb") as f:
-        count_dict = pickle.load(f)
+    data = pd.read_csv('./examples/all_data.csv')
+    count_dict = {'item_id': 34048, 'brand_id': 3663, 'shop_id': 4786, 'cate_id': 80}
 
     item_feature = SparseFeat("item_id", vocabulary_size=count_dict["item_id"], embedding_dim=128, dtype='int32')
 
@@ -31,4 +30,4 @@ if __name__ == "__main__":
                   metrics=None)
 
     history = model.fit(model_inputs, data[target].values,
-                        batch_size=2048, epochs=2, verbose=2, validation_split=0.2)
+                        batch_size=2048, epochs=2, verbose=1, validation_split=0.2)

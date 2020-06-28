@@ -9,12 +9,12 @@ Author:
 import itertools
 
 import tensorflow as tf
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.initializers import (Zeros, glorot_normal,
+from tensorflow.keras import backend as K
+from tensorflow.keras.initializers import (Zeros, glorot_normal,
                                                   glorot_uniform)
-from tensorflow.python.keras.layers import Layer
-from tensorflow.python.keras.regularizers import l2
-from tensorflow.python.layers import utils
+from tensorflow.keras.layers import Layer
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras import utils
 
 from .activation import activation_layer
 from .utils import concat_func, reduce_sum, softmax, reduce_mean
@@ -1266,9 +1266,7 @@ class Attention_Eges(Layer):
         # for i in range(len(input_shape)):
         #     shape_set.add(tuple(reduced_input_shape[i]))
 
-        shape_set = input_shape
-
-        self.feat_nums = shape_set[1][1]
+        self.feat_nums = input_shape[1][1]
         self.alpha_attention = self.add_weight(
                 name='alpha_attention',
                 shape=(self.item_nums, self.feat_nums),
@@ -1299,3 +1297,108 @@ class Attention_Eges(Layer):
         config = {'item_nums': self.item_nums, "l2_reg": self.l2_reg, 'seed': self.seed}
         base_config = super(Attention_Eges, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+# weight expert network
+class Weighted_Expert_Network(Layer):
+    def __init__(self, expert_nums, task_nums, hidden_units=16, expert_activation="relu", gate_activation="softmax", l2_reg=1e-5, seed=1024, use_bias=True, use_omoe=False, **kwargs):
+        super(Weighted_Expert_Network, self).__init__(**kwargs)
+        self.expert_nums = expert_nums
+        self.task_nums = task_nums
+        self.hidden_units = hidden_units
+        self.expert_activation = expert_activation
+        self.gate_activation = gate_activation
+        self.l2_reg = l2_reg
+        self.seed = seed
+        self.use_bias = use_bias
+        self.use_omoe = use_omoe
+
+    def build(self, input_shape):
+        if len(input_shape) != 2 or (not isinstance(input_shape, tf.TensorShape)):
+            ValueError("input_shape must be (batch_size, input_dimensions)")
+        super(Weighted_Expert_Network, self).build(input_shape)
+        self.expert_kernels = self.add_weight(name="expert_kernel",
+                                              shape=(input_shape[-1], self.hidden_units, self.expert_nums),
+                                              initializer=tf.keras.initializers.GlorotNormal(seed=self.seed),
+                                              regularizer=l2(self.l2_reg)
+                                             )
+
+        if self.use_omoe:
+            self.task_nums = 1
+    
+        self.gate_kernels = [self.add_weight(name="gate_kernel_task_%s" % i,
+                                             shape=(input_shape[-1], self.expert_nums),
+                                             initializer=tf.keras.initializers.GlorotNormal(seed=self.seed),
+                                             regularizer=l2(self.l2_reg)
+                                            ) for i in range(self.task_nums)]
+
+        # 论文好像没有这个bias
+        if self.use_bias:
+            self.expert_bias = self.add_weight(name="expert_bias",
+                                               shape=(self.hidden_units, self.expert_nums),
+                                               initializer=Zeros(),
+                                               regularizer=l2(self.l2_reg)
+                                               )
+
+            self.gate_bias = [self.add_weight(name="gate_bias_task_%s" % i,
+                                              shape=(self.expert_nums,),
+                                              initializer=Zeros(),
+                                              regularizer=l2(self.l2_reg)
+                                            ) for i in range(self.task_nums)]
+        
+        self.expert_activation_layer = activation_layer(self.expert_activation)
+        self.gate_activation_layer = activation_layer(self.gate_activation)
+
+    def call(self, inputs, **kwargs):
+        if len(inputs.shape) != 2 or (not isinstance(inputs, tf.Tensor)):
+            ValueError("inputs must be (batch_size, input_dimensions)") 
+        # (batch_size, hidden_units, expert_nums)
+        expert_outputs = tf.tensordot(inputs, self.expert_kernels, axes=[1, 0])
+        expert_outputs = tf.add(expert_outputs, self.expert_bias)
+        expert_outputs = self.expert_activation_layer(expert_outputs)
+
+        weighted_expert_outputs = []
+        for idx, gate_kernel in enumerate(self.gate_kernels):
+            # (batch_size, expert_nums)
+            # softmax
+            gate_output = tf.matmul(inputs, gate_kernel)
+            gate_output = tf.add(gate_output, self.gate_bias[idx])
+            gate_output = self.gate_activation_layer(gate_output)
+
+            # weighted sum
+            # (batch_size, hidden_units)
+            gate_output = tf.expand_dims(gate_output, axis=2)
+            weighted_expert_output = tf.matmul(expert_outputs, gate_output)
+            weighted_expert_output = tf.squeeze(weighted_expert_output, axis=-1)
+
+            weighted_expert_outputs.append(weighted_expert_output)
+        
+        if self.use_omoe:
+            weighted_expert_outputs = weighted_expert_outputs[0]
+
+        return weighted_expert_outputs
+
+    def compute_mask(self, input_shape, mask, **kwargs):
+        return None
+
+    def compute_output_shape(self, input_shape):
+        if self.use_omoe:
+            return (None, self.hidden_units)
+        return [(None, self.hidden_units) for _ in range(self.task_nums)]
+    
+    def get_config(self, ):
+        self.expert_nums = expert_nums
+        self.task_nums = task_nums
+        self.hidden_units = hidden_units
+        self.expert_activation = expert_activation
+        self.gate_activation = gate_activation
+        self.l2_reg = l2_reg
+        self.seed = seed
+        self.use_bias = use_bias
+        self.use_omoe = use_omoe
+        config = {"expert_nums": self.expert_nums, "task_nums": self.task_nums, 'hidden_units': self.hidden_units, 
+                  "expert_activation": self.expert_activation, "gate_activation": self.gate_activation, "l2_reg": self.l2_reg,
+                  "seed": self.seed, "use_bias": self.use_bias, "use_omoe": self.use_omoe
+                 }
+        base_config = super(Weighted_Expert_Network, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+        
