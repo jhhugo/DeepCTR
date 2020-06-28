@@ -6,6 +6,7 @@ Author:
 
 """
 import tensorflow as tf
+from tensorflow.python.keras.layers import Flatten
 
 
 class NoMask(tf.keras.layers.Layer):
@@ -227,5 +228,19 @@ def add_func(inputs):
     return Add()(inputs)
 
 
+<<<<<<< HEAD
 def basic_loss_function(y_true, y_pred):
     return tf.math.reduce_mean(y_pred)
+=======
+def combined_dnn_input(sparse_embedding_list, dense_value_list):
+    if len(sparse_embedding_list) > 0 and len(dense_value_list) > 0:
+        sparse_dnn_input = Flatten()(concat_func(sparse_embedding_list))
+        dense_dnn_input = Flatten()(concat_func(dense_value_list))
+        return concat_func([sparse_dnn_input, dense_dnn_input])
+    elif len(sparse_embedding_list) > 0:
+        return Flatten()(concat_func(sparse_embedding_list))
+    elif len(dense_value_list) > 0:
+        return Flatten()(concat_func(dense_value_list))
+    else:
+        raise NotImplementedError("dnn_feature_columns can not be empty list")
+>>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5

@@ -254,6 +254,7 @@ class PredictionLayer(Layer):
         base_config = super(PredictionLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
+<<<<<<< HEAD
 class SampledSoftmax(Layer):
     def __init__(self, item_nums, num_sampled, l2_reg, seed, **kwargs):
         super(SampledSoftmax, self).__init__(**kwargs)
@@ -305,3 +306,6 @@ class SampledSoftmax(Layer):
                   "l2_reg": self.l2_reg, "seed": self.seed}
         base_config = super(SampledSoftmax, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+=======
+
+>>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5
