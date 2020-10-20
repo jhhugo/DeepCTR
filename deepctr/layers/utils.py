@@ -50,26 +50,13 @@ class Hash(tf.keras.layers.Layer):
 
         num_buckets = self.num_buckets if not self.mask_zero else self.num_buckets - 1
         try:
-<<<<<<< HEAD
-            # hash冲突的可能性高, string_to_hash_bucket_strong: hash冲突的可能性低
-            hash_x = tf.string_to_hash_bucket_fast(x, self.num_buckets if not self.mask_zero else self.num_buckets - 1,
-                                                    name=None)  # weak hash
-=======
             hash_x = tf.string_to_hash_bucket_fast(x, num_buckets,
                                                    name=None)  # weak hash
->>>>>>> 7ab8bc6a70982aa79c36c20678c98becb7f291b1
         except:
             hash_x = tf.strings.to_hash_bucket_fast(x, num_buckets,
                                                     name=None)  # weak hash
         if self.mask_zero:
-<<<<<<< HEAD
-            mask_1 = tf.cast(tf.not_equal(x, "0"), 'int64')
-            mask_2 = tf.cast(tf.not_equal(x, "0.0"), 'int64')
-            mask = mask_1 * mask_2
-            # mask vallue return zero
-=======
             mask = tf.cast(tf.not_equal(x, zero), dtype='int64')
->>>>>>> 7ab8bc6a70982aa79c36c20678c98becb7f291b1
             hash_x = (hash_x + 1) * mask
 
         return hash_x
@@ -142,7 +129,7 @@ class Linear(tf.keras.layers.Layer):
         return None
 
     def get_config(self, ):
-        config = {'mode': self.mode, 'l2_reg': self.l2_reg, 'use_bias': self.use_bias}
+        config = {'mode': self.mode, 'l2_reg': self.l2_reg, 'use_bias': self.use_bias, 'seed': self.seed}
         base_config = super(Linear, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -242,10 +229,6 @@ class Add(tf.keras.layers.Layer):
 
         return tf.keras.layers.add(inputs)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 7ab8bc6a70982aa79c36c20678c98becb7f291b1
 def add_func(inputs):
     return Add()(inputs)
     

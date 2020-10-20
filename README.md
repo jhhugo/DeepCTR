@@ -24,7 +24,9 @@ DeepCTR is a **Easy-to-use**,**Modular** and **Extendible** package of deep-lear
 - Provide  `tensorflow estimator` interface for **large scale data** and **distributed training**. [example](https://deepctr-doc.readthedocs.io/en/latest/Quick-Start.html#getting-started-4-steps-to-deepctr-estimator-with-tfrecord)
 - It is compatible with both `tf 1.x`  and `tf 2.x`.
 
-
+Some related project:
+- DeepMatch: https://github.com/shenweichen/DeepMatch
+- DeepCTR-Torch: https://github.com/shenweichen/DeepCTR-Torch
 
 
 Let's [**Get Started!**](https://deepctr-doc.readthedocs.io/en/latest/Quick-Start.html)([Chinese Introduction](https://zhuanlan.zhihu.com/p/53231955)) and [welcome to join us!](./CONTRIBUTING.md)
@@ -55,16 +57,16 @@ Let's [**Get Started!**](https://deepctr-doc.readthedocs.io/en/latest/Quick-Star
 
 ## Citation
 
-- Weichen Shen. (2018). DeepCTR: Easy-to-use,Modular and Extendible package of deep-learning based CTR models. https://github.com/shenweichen/deepctr.
+- Weichen Shen. (2017). DeepCTR: Easy-to-use,Modular and Extendible package of deep-learning based CTR models. https://github.com/shenweichen/deepctr.
 
 
 If you find this code useful in your research, please cite it using the following BibTeX:
 
 ```bibtex
-@misc{shen2018deepctr,
+@misc{shen2017deepctr,
   author = {Weichen Shen},
   title = {DeepCTR: Easy-to-use,Modular and Extendible package of deep-learning based CTR models},
-  year = {2018},
+  year = {2017},
   publisher = {GitHub},
   journal = {GitHub Repository},
   howpublished = {\url{https://github.com/shenweichen/deepctr}},
@@ -78,3 +80,12 @@ Please follow our wechat to join group:
 - wechat ID: **deepctrbot**
 
   ![wechat](./docs/pics/code.png)
+  
+##  Cooperative promotion 合作推广
+For more information about the recommendation system, such as **feature engineering, user profile, matching, ranking and multi-objective optimization, online learning and real-time computing, and more cutting-edge technologies and practical projects**:
+
+更多关于推荐系统的内容，如**特征工程，用户画像，召回，排序和多目标优化，在线学习与实时计算以及更多前沿技术和实战项目**等可参考：
+
+- [推荐系统实战](https://www.julyedu.com/course/getDetail/181?ccode=5ee751d37278c)
+- [互联网计算广告实战](https://www.julyedu.com/course/getDetail/158?ccode=5ee751d37278c)
+
