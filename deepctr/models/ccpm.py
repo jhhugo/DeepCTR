@@ -13,6 +13,7 @@ import tensorflow as tf
 
 from ..feature_column import build_input_features, get_linear_logit, input_from_feature_columns
 from ..layers.core import DNN, PredictionLayer
+
 from ..layers.sequence import KMaxPooling
 from ..layers.utils import concat_func, add_func
 

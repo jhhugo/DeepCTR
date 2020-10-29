@@ -21,7 +21,7 @@ def WDLEstimator(linear_feature_columns, dnn_feature_columns, dnn_hidden_units=(
                  dnn_optimizer='Adagrad', training_chief_hooks=None):
     """Instantiates the Wide&Deep Learning architecture.
 
-    :param linear_feature_columns: An iterable containing all the features used by linear part of the model.
+    :param linear_feature_columns: tf feature_column
     :param dnn_feature_columns: An iterable containing all the features used by deep part of the model.
     :param dnn_hidden_units: list,list of positive integer or empty list, the layer number and units in each layer of DNN
     :param l2_reg_linear: float. L2 regularizer strength applied to wide part
@@ -46,6 +46,13 @@ def WDLEstimator(linear_feature_columns, dnn_feature_columns, dnn_hidden_units=(
     """
 
     def _model_fn(features, labels, mode, config):
+        # features: A dict from feature names to tensors.
+
+        # 训练模式
+        # The following standard keys are defined:
+        # TRAIN: training/fitting mode.
+        # EVAL: testing/evaluation mode.
+        # PREDICT: predication/inference mode.
         train_flag = (mode == tf.estimator.ModeKeys.TRAIN)
 
         linear_logits = get_linear_logit(features, linear_feature_columns, l2_reg_linear=l2_reg_linear)

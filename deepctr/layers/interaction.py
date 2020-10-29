@@ -10,14 +10,6 @@ Authors:
 import itertools
 
 import tensorflow as tf
-<<<<<<< HEAD
-from tensorflow.keras import backend as K
-from tensorflow.keras.initializers import (Zeros, glorot_normal,
-                                                  glorot_uniform)
-from tensorflow.keras.layers import Layer
-from tensorflow.keras.regularizers import l2
-from tensorflow.keras import utils
-=======
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.backend import batch_dot
 from tensorflow.python.keras.initializers import (Zeros, glorot_normal,
@@ -25,7 +17,6 @@ from tensorflow.python.keras.initializers import (Zeros, glorot_normal,
 from tensorflow.python.keras.layers import Layer
 from tensorflow.python.keras.regularizers import l2
 from tensorflow.python.layers import utils
->>>>>>> 66d173e5736eae2e19c32e28e6d656ef873461a5
 
 from .activation import activation_layer
 from .utils import concat_func, reduce_sum, softmax, reduce_mean
@@ -682,6 +673,7 @@ class InteractingLayer(Layer):
 
         inner_product = tf.matmul(
             querys, keys, transpose_b=True)  # head_num None F F
+        # 没有scale 除以一个D的开方
         self.normalized_att_scores = softmax(inner_product)
 
         result = tf.matmul(self.normalized_att_scores,

@@ -17,7 +17,7 @@ def get_linear_logit(features, linear_feature_columns, l2_reg_linear=0):
         if not linear_feature_columns:
             linear_logits = tf.Variable([[0.0]], name='bias_weights')
         else:
-
+            # 加权求和
             linear_logits = linear_model(features, linear_feature_columns)
 
             if l2_reg_linear > 0:
